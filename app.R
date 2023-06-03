@@ -15,7 +15,7 @@ if(!require(ggiraph)) install.packages("ggiraph", repos = "http://cran.us.r-proj
 if(!require(RColorBrewer)) install.packages("RColorBrewer", repos = "http://cran.us.r-project.org")
 if(!require(leaflet)) install.packages("leaflet", repos = "http://cran.us.r-project.org")
 if(!require(plotly)) install.packages("plotly", repos = "http://cran.us.r-project.org")
-if(!require(geojsonio)) install.packages("geojsonio", repos = "http://cran.us.r-project.org")
+# if(!require(geojsonio)) install.packages("geojsonio", repos = "http://cran.us.r-project.org")
 if(!require(shiny)) install.packages("shiny", repos = "http://cran.us.r-project.org")
 if(!require(shinyWidgets)) install.packages("shinyWidgets", repos = "http://cran.us.r-project.org")
 if(!require(shinydashboard)) install.packages("shinydashboard", repos = "http://cran.us.r-project.org")
@@ -32,7 +32,9 @@ if (file.exists('master-record.csv')) {
 }
   
                   
-master_record$Time = as.POSIXct(master_record$Time, origin = "1970-01-01", tz = "")
+# master_record$Time = as.POSIXct(master_record$Time, origin = "1970-01-01", tz = "")
+master_record$Time <- as.POSIXct(as.numeric(master_record$Time), origin = "1970-01-01", tz = "UTC")
+
 # test_record <- master_record %>% filter(Time == '1568473059.70362')
 
 
@@ -59,6 +61,7 @@ if (file.exists('css/styles.css')) {
 
 mr_min_date = as.Date(min(master_record$Time), format = "%Y-%m-%d")
 mr_max_date = as.Date(max(master_record$Time), format = "%Y-%m-%d")
+unique_targets <- unique(master_record$Target)
  
 
 # dataframe w/ aggregate by location (for circle markers)
@@ -99,6 +102,14 @@ ui <- bootstrapPage(
                                                     timeFormat = "%d %b %y"
                                                     ),
                                         
+                                        selectInput("target_selection",
+                                                    label = "Target: ",
+                                                    target_selection,
+                                                    selected = NULL,
+                                                   
+                                                   )
+
+                                        
                                         h3(textOutput("clean_date_min"), align = "right"),
                                         h3(textOutput("sample_date"), align = "right")
                                         
@@ -125,20 +136,21 @@ server <- function(input, output, session) {
    })
    
    output$clean_date_min <- renderText({
-     typeof(input$data_range[1])
-     # format(as.POSIXct(input$date_range[1])) #, "%d %b %y")
-     as.POSIXct(input$date_range[1])
+     # typeof(input$data_range[1])
+     format(as.POSIXct(input$date_range[1])) #, "%d %b %y")
+     # as.POSIXct(input$date_range[1])
    })
    
    output$sample_date <- renderText({
      # as.POSIXct(master_record[3, 2], origin = "1970-01-01", tz = "") 
-     
-     "test"
+
    })
       
    reactive_db = reactive({
      # master_record %>% filter(date >= my_range[0] & date <= my_range[1])
-     reactive = master_record %>% filter(as.Date(Time, format = "%Y-%m-%d") >= as.Date(input$date_range[1], format = "%Y-%m-%d") & as.Date(Time, format = "%Y-%m-%d") <= as.Date(input$date_range[2], format = "%Y-%m-%d"))
+     # reactive = master_record %>% filter(as.Date(Time, format = "%Y-%m-%d") >= as.Date(input$date_range[1], format = "%Y-%m-%d") & as.Date(Time, format = "%Y-%m-%d") <= as.Date(input$date_range[2], format = "%Y-%m-%d"))
+     reactive = master_record %>% filter(Time >= as.POSIXct(input$date_range[1]) & Time <= as.POSIXct(input$date_range[2]))
+
      #  %>% filter(Time == as.POSIXct(input$date_range[1], origin = "1970-01-01", tz = ""))
    })
    
